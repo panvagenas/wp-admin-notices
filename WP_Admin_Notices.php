@@ -17,9 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-if(!has_action('admin_init', array('WP_Admin_Notices', 'getInstance'))){
-    add_action('admin_init', array('WP_Admin_Notices', 'getInstance'));
-}
 
 if (!class_exists('WP_Admin_Notices')) {
     /**
@@ -349,4 +346,8 @@ if (!class_exists('WP_Notice')) {
 
     }
 
+}
+
+if(!has_action('admin_init', array('WP_Admin_Notices', 'getInstance'))){
+    add_action('admin_init', array('WP_Admin_Notices', 'getInstance'));
 }
