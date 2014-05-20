@@ -60,7 +60,7 @@ if (!class_exists('WP_Admin_Notices')) {
          * Return an instance of this class.
          *
          * @since 1.0.0
-         * @return erpAdminNotices
+         * @return WP_Admin_Notices
          */
         public static function getInstance() {
             if (null == self::$instance) {
@@ -135,7 +135,7 @@ if (!class_exists('WP_Admin_Notices')) {
             $screens = $notice->getScreen();
             if (!empty($screens)) {
                 $curScreen = get_current_screen();
-                if (!is_array($screens) || !in_array($curScreen, $screens)) {
+                if (!is_array($screens) || !in_array($curScreen->id, $screens)) {
                     return false;
                 }
             }
@@ -215,7 +215,7 @@ if (!class_exists('WP_Notice')) {
          */
         protected $displayedToUsers = array();
 
-        public function __construct($content, $times = 1, $screen = array()) {
+        public function __construct($content, $times = 1, Array $screen = array()) {
             $this->content = $content;
             $this->screen = $screen;
             $this->id = uniqid();
