@@ -215,11 +215,12 @@ if (!class_exists('WP_Notice')) {
          */
         protected $displayedToUsers = array();
 
-        public function __construct($content, $times = 1, Array $screen = array()) {
+        public function __construct($content, $times = 1, Array $screen = array(), Array $users = array()) {
             $this->content = $content;
             $this->screen = $screen;
             $this->id = uniqid();
             $this->times = $times;
+            $this->users = $users;
         }
 
         public function getContentFormated($wrapInParTag = true) {
