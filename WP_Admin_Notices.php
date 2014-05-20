@@ -57,13 +57,6 @@ if (!class_exists('WP_Admin_Notices')) {
         }
 
         /**
-         * Before destruction notices are stored in DB
-         */
-        public function __destruct() {
-            $this->storeNotices();
-        }
-
-        /**
          * Return an instance of this class.
          *
          * @since 1.0.0
@@ -93,13 +86,14 @@ if (!class_exists('WP_Admin_Notices')) {
         public function displayNotices() {
             foreach ($this->notices as $key => $notice) {
                 if ($this->isTimeToDisplay($notice)) {
-                    echo $notice->getContent();
+                    echo $notice->getContentFormated();
                     $notice->incrementDisplayedTimes();
                 }
                 if ($notice->isTimeToDie()) {
                     unset($this->notices[$key]);
                 }
             }
+            $this->storeNotices();
         }
 
         /**
@@ -120,6 +114,7 @@ if (!class_exists('WP_Admin_Notices')) {
                     break;
                 }
             }
+            $this->storeNotices();
         }
 
         /**
@@ -128,6 +123,7 @@ if (!class_exists('WP_Admin_Notices')) {
          */
         public function addNotice(WP_Notice $notice) {
             $this->notices[] = $notice;
+            $this->storeNotices();
         }
 
         /**
@@ -222,7 +218,6 @@ if (!class_exists('WP_Notice')) {
         public function __construct($content, $times = 1, $screen = array()) {
             $this->content = $content;
             $this->screen = $screen;
-            $this->type = $type;
             $this->id = uniqid();
             $this->times = $times;
         }
