@@ -17,10 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+ * @url https://bitbucket.org/vagenas/wp-admin-notices/wiki/Home
+ * @
+ */
 
 if (!class_exists('WP_Admin_Notices')) {
     /**
-     * Description of WP_Admin_Notices
+     * Singleton class of WP_Admin_Notices
+     * Please see https://bitbucket.org/vagenas/wp-admin-notices/wiki/Home
      *
      * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
      */
@@ -49,7 +55,7 @@ if (!class_exists('WP_Admin_Notices')) {
         protected $notices = array();
 
         /**
-         * Costructor
+         * Costructor (private since this is a singleton)
          */
         private function __construct() {
             $this->loadNotices();
@@ -57,7 +63,7 @@ if (!class_exists('WP_Admin_Notices')) {
         }
 
         /**
-         * Return an instance of this class.
+         * Returns an instance of this class.
          *
          * @since 1.0.0
          * @return WP_Admin_Notices
@@ -160,7 +166,7 @@ if (!class_exists('WP_Admin_Notices')) {
 
 if (!class_exists('WP_Notice')) {
     /**
-     * Description of WP_Notice
+     * Abstract class of a notice
      *
      * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
      */
@@ -215,6 +221,13 @@ if (!class_exists('WP_Notice')) {
          */
         protected $displayedToUsers = array();
 
+        /**
+         * 
+         * @param type $content Coantent to be displayed
+         * @param type $times How many times this notice will be displayed
+         * @param array $screen The admin screens this notice will be displayed into (empty for all screens)
+         * @param array $users Array of users this notice concernes (empty for all users)
+         */
         public function __construct($content, $times = 1, Array $screen = array(), Array $users = array()) {
             $this->content = $content;
             $this->screen = $screen;
@@ -223,6 +236,11 @@ if (!class_exists('WP_Notice')) {
             $this->users = $users;
         }
 
+        /**
+         * Get the content of the notice
+         * @param bool $wrapInParTag If the content should be wrapped in a paragraph tag
+         * @return string Formated content
+         */
         public function getContentFormated($wrapInParTag = true) {
             $before = '<div class="' . $this->type . '">';
             $before .= $wrapInParTag ? '<p>' : '';
@@ -231,6 +249,10 @@ if (!class_exists('WP_Notice')) {
             return $before . $this->getContent() . $after;
         }
 
+        /**
+         * Increment displayed times of the notice
+         * @return \WP_Notice
+         */
         public function incrementDisplayedTimes() {
             $this->displayedTimes++;
 
@@ -242,6 +264,10 @@ if (!class_exists('WP_Notice')) {
             return $this;
         }
 
+        /**
+         * Checks if the notice should me destroyed
+         * @return boolean True iff notice is deprecated
+         */
         public function isTimeToDie() {
             if (empty($this->users)) {
                 return $this->displayedTimes >= $this->times;
@@ -259,64 +285,117 @@ if (!class_exists('WP_Notice')) {
             return false;
         }
 
+        /**
+         * Get the current screen slug
+         * @return string Current screen slug
+         */
         public function getScreen() {
             return $this->screen;
         }
 
-        public function setScreen($screen) {
+        /**
+         * Set the screens the notice will be displayed
+         * @param array $screen
+         * @return \WP_Notice
+         */
+        public function setScreen(Array $screen) {
             $this->screen = $screen;
             return $this;
         }
 
+        /**
+         * Get the notice string unformated
+         * @return string
+         */
         public function getContent() {
             return $this->content;
         }
 
+        /**
+         * 
+         * @param string $content
+         * @return \WP_Notice
+         */
         public function setContent($content) {
             $this->content = $content;
             return $this;
         }
 
-        public function setScreenAnywhere() {
-            $this->setScreen('anywhere');
-            return $this;
-        }
-
+        /**
+         * 
+         * @return string
+         */
         public function getId() {
             return $this->id;
         }
 
+        /**
+         * 
+         * @return int
+         */
         public function getTimes() {
             return $this->times;
         }
 
+        /**
+         * 
+         * @return array
+         */
         public function getUsers() {
             return $this->users;
         }
 
+        /**
+         * 
+         * @param int $times
+         * @return \WP_Notice
+         */
         public function setTimes($times) {
             $this->times = $times;
             return $this;
         }
 
+        /**
+         * 
+         * @param array $users
+         * @return \WP_Notice
+         */
         public function setUsers(Array $users) {
             $this->users = $users;
             return $this;
         }
 
+        /**
+         * 
+         * @return int
+         */
         public function getDisplayedTimes() {
             return $this->displayedTimes;
         }
 
+        /**
+         * 
+         * @return array
+         */
         public function getDisplayedToUsers() {
             return $this->displayedToUsers;
         }
 
+        /**
+         * 
+         * @param int $displayedTimes
+         * @return \WP_Notice
+         */
         public function setDisplayedTimes($displayedTimes) {
             $this->displayedTimes = $displayedTimes;
             return $this;
         }
 
+        /**
+         * 
+         * @param array $displayedToUsers
+         * @return \WP_Notice
+         */
         public function setDisplayedToUsers(Array $displayedToUsers) {
             $this->displayedToUsers = $displayedToUsers;
             return $this;
@@ -324,6 +403,9 @@ if (!class_exists('WP_Notice')) {
 
     }
 
+    /**
+     * Type of notices
+     */
     class WP_Error_Notice extends WP_Notice {
 
         protected $type = 'error';
@@ -344,6 +426,9 @@ if (!class_exists('WP_Notice')) {
 
 }
 
+/**
+ * Hook action to admin init
+ */
 if(!has_action('admin_init', array('WP_Admin_Notices', 'getInstance'))){
     add_action('admin_init', array('WP_Admin_Notices', 'getInstance'));
 }
