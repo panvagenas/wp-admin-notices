@@ -4,7 +4,7 @@
 This is a simple script to display WordPress notices to admin page
 
 ## How to use it?
-### Basic use
+### Basic usage
 First load the file to your script
 
 ```
