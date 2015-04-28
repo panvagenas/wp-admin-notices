@@ -8,19 +8,16 @@ This is a simple script to display WordPress notices to admin page
 First load the file to your script
 
 ```
-#!php
     require_once path/to/file/WP_Admin_Notices.php
 ```
 
 Whenever you want to enqueue a notice create a notice
 ```
-#!php
     $notice = new WP_Updated_Notice('Your message here');
 ```
 
 And add enqueue it
 ```
-#!php
     WP_Admin_Notices::getInstance()->addNotice($notice);
 ```
 
