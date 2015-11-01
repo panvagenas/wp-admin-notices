@@ -47,6 +47,14 @@ if (!class_exists('WP_Admin_Notices')) {
          */
         protected $noticesArrayName = 'WPAdminNotices';
 
+ 
+        /**
+         * Name of the GET / POST that will be to remove the msg
+         * @var string 
+         * @since 1.0.0
+         */
+        protected $REQUESTID = 'RMSGID';       
+        
         /**
          * Notices array as loaded from DB
          * @var array
@@ -90,16 +98,29 @@ if (!class_exists('WP_Admin_Notices')) {
          * Just echoes notices that should be displayed.
          */
         public function displayNotices() {
-            foreach ($this->notices as $key => $notice) {
-                if ($this->isTimeToDisplay($notice)) {
-                    echo $notice->getContentFormated();
+            $this->auto_remove_Notice();
+            foreach ($this->notices as $key => $notice) { 
+                if ($this->isTimeToDisplay($notice)) { 
+                    echo $notice->getContentFormated($notice->getWrapper());
                     $notice->incrementDisplayedTimes();
                 }
-                if ($notice->isTimeToDie()) {
-                    unset($this->notices[$key]);
+                if($notice->getTimes() > 0){
+                    if ($notice->isTimeToDie()) {
+                        unset($this->notices[$key]);
+                    }                    
                 }
+                
             }
             $this->storeNotices();
+        }
+        
+        /**
+         * Removes Notice By Getting ID From GET / POST METHOD
+         */
+        public function auto_remove_Notice(){
+            if(isset($_REQUEST[$this->REQUESTID])){
+                $this->deleteNotice($_REQUEST[$this->REQUESTID]);
+            }
         }
 
         /**
@@ -152,7 +173,9 @@ if (!class_exists('WP_Admin_Notices')) {
                 if (!is_array($usersArray) || !in_array($curUser, $usersArray) || $usersArray[$curUser] >= $notice->getTimes()) {
                     return false;
                 }
-            } elseif ($notice->getTimes() <= $notice->getDisplayedTimes()) {
+            } else if ($notice->getTimes() == 0) {
+                return true;
+            } else if ($notice->getTimes() <= $notice->getDisplayedTimes()) {
                 return false;
             }
 
@@ -222,18 +245,25 @@ if (!class_exists('WP_Notice')) {
         protected $displayedToUsers = array();
 
         /**
+         * With Or WithOut Wraper
+         * @var array
+         */
+        protected $WithWraper = true;        
+
+        /**
          * 
          * @param type $content Coantent to be displayed
          * @param type $times How many times this notice will be displayed
          * @param array $screen The admin screens this notice will be displayed into (empty for all screens)
          * @param array $users Array of users this notice concernes (empty for all users)
          */
-        public function __construct($content, $times = 1, Array $screen = array(), Array $users = array()) {
+        public function __construct($content, $times = 1, Array $screen = array(), Array $users = array(), $WithWraper = true) {
             $this->content = $content;
             $this->screen = $screen;
             $this->id = uniqid();
             $this->times = $times;
             $this->users = $users;
+            $this->WithWraper = $WithWraper;
         }
 
         /**
@@ -285,6 +315,23 @@ if (!class_exists('WP_Notice')) {
             return false;
         }
 
+         /**
+         * Get the $WithWraper Value
+         */
+        public function getWrapper(){
+            return $this->WithWraper;
+        }
+
+        /**
+         * Set the $WithWraper Value
+         * @param boolean $screen 
+         */
+        public function setWrapper($wrapper = true){
+            $this->WithWraper = $wrapper;
+            return $this;
+        }
+        
+        
         /**
          * Get the current screen slug
          * @return string Current screen slug
