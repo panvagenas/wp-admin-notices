@@ -12,11 +12,11 @@
 namespace Notices;
 
 
-/**
- * Singleton class of WP_Admin_Notices
- *
- * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
- */
+	/**
+	 * Singleton class of WP_Admin_Notices
+	 *
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 */
 /**
  * Class WP_Admin_Notices
  *

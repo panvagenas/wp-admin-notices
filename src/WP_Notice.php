@@ -112,10 +112,10 @@ abstract class WP_Notice {
 	 *
 	 * @return string Formatted content
 	 */
-	public function getContentFormatted(  ) {
+	public function getContentFormatted() {
 		$formatter = $this->formatter ? $this->formatter : new WordPress();
 
-		return $formatter->formatOutput($this);
+		return $formatter->formatOutput( $this );
 	}
 
 	/**
@@ -329,8 +329,8 @@ abstract class WP_Notice {
 	 * @since  2.0.0
 	 */
 	public function setFormatter( $formatter ) {
-		if(!($formatter instanceof Formatter)){
-			throw new \InvalidArgumentException('Notice Formatter must be an instance of Notices\\Formatters\\Formatter');
+		if ( ! ( $formatter instanceof Formatter ) ) {
+			throw new \InvalidArgumentException( 'Notice Formatter must be an instance of Notices\\Formatters\\Formatter' );
 		}
 		$this->formatter = $formatter;
 
