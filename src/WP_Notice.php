@@ -147,12 +147,26 @@ abstract class WP_Notice {
 	public function incrementDisplayedTimes() {
 		$this->displayedTimes ++;
 
-		if ( !array_key_exists( get_current_user_id(), $this->displayedToUsers ) ) {
-			$this->displayedToUsers[ get_current_user_id() ] = 0;
-		}
-		$this->displayedToUsers[ get_current_user_id() ] ++;
+		$userId = get_current_user_id();
+		$this->displayedToUsers[ $userId ] = $this->maybeInitDisplayedToUsers($userId) + 1;
 
 		return $this;
+	}
+
+	/**
+	 * Initializes value in {@link $this::displayedToUsers} for $userId
+	 *
+	 * @param int $userId
+	 *
+	 * @return int The current value for the specified user after initialization
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.0.1
+	 */
+	protected function maybeInitDisplayedToUsers($userId){
+		if ( ! array_key_exists( $userId, $this->displayedToUsers ) ) {
+			$this->displayedToUsers[ $userId ] = 0;
+		}
+		return $this->displayedToUsers[ $userId ];
 	}
 
 	/**
@@ -165,11 +179,11 @@ abstract class WP_Notice {
 			return $this->displayedTimes >= $this->times;
 		}
 
-		$sum = 0;
+		$displayedSum = 0;
 		foreach ( $this->users as $userId ) {
-			$sum += $this->displayedToUsers[ $userId ];
+			$displayedSum += $this->maybeInitDisplayedToUsers($userId);
 		}
-		if ( (count( $this->users ) * $this->times) <= $sum ) {
+		if ( ( count( $this->users ) * $this->times ) <= $displayedSum ) {
 			return true;
 		}
 
