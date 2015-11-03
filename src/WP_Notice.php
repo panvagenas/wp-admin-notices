@@ -147,11 +147,10 @@ abstract class WP_Notice {
 	public function incrementDisplayedTimes() {
 		$this->displayedTimes ++;
 
-		if ( array_key_exists( get_current_user_id(), $this->displayedToUsers ) ) {
-			$this->displayedToUsers[ get_current_user_id() ] ++;
-		} else {
-			$this->displayedToUsers[ get_current_user_id() ] = 1;
+		if ( !array_key_exists( get_current_user_id(), $this->displayedToUsers ) ) {
+			$this->displayedToUsers[ get_current_user_id() ] = 0;
 		}
+		$this->displayedToUsers[ get_current_user_id() ] ++;
 
 		return $this;
 	}
@@ -166,13 +165,11 @@ abstract class WP_Notice {
 			return $this->displayedTimes >= $this->times;
 		}
 
-		$i = 0;
-		foreach ( $this->users as $value ) {
-			if ( isset( $this->displayedToUsers[ $value ] ) && $this->displayedToUsers[ $value ] >= $this->times ) {
-				$i ++;
-			}
+		$sum = 0;
+		foreach ( $this->users as $userId ) {
+			$sum += $this->displayedToUsers[ $userId ];
 		}
-		if ( $i >= count( $this->users ) ) {
+		if ( (count( $this->users ) * $this->times) <= $sum ) {
 			return true;
 		}
 
