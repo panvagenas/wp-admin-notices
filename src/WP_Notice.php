@@ -102,7 +102,7 @@ abstract class WP_Notice {
 		$this->content = $content;
 		$this->title   = $title;
 		$this->screen  = $screen;
-		$this->id      = uniqid();
+		$this->id      = uniqid(md5($content), true);
 		$this->times   = $times;
 		$this->users   = $users;
 	}
