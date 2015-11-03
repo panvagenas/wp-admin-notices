@@ -119,7 +119,7 @@ class WP_Admin_Notices {
 	 * @since  2.0.0
 	 */
 	private function isTimeToDisplayForScreen( WP_Notice $notice ) {
-		$screens = $notice->getScreen();
+		$screens = $notice->getScreens();
 		if ( ! empty( $screens ) ) {
 			$curScreen = get_current_screen();
 			if ( ! is_array( $screens ) || ! in_array( $curScreen->id, $screens ) ) {

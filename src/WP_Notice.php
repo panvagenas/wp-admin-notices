@@ -48,7 +48,7 @@ abstract class WP_Notice {
 	 *
 	 * @var array
 	 */
-	protected $screen;
+	protected $screens;
 
 	/**
 	 * Unique identifier for notice
@@ -101,7 +101,7 @@ abstract class WP_Notice {
 	public function __construct( $content, $title = '', $times = 1, Array $screen = array(), Array $users = array() ) {
 		$this->content = $content;
 		$this->title   = $title;
-		$this->screen  = $screen;
+		$this->screens  = $screen;
 		$this->id      = uniqid(md5($content), true);
 		$this->times   = $times;
 		$this->users   = $users;
@@ -191,23 +191,23 @@ abstract class WP_Notice {
 	}
 
 	/**
-	 * Get the current screen slug
+	 * Get the screens for the notice to be displayed
 	 *
-	 * @return string Current screen slug
+	 * @return string Current screens slug
 	 */
-	public function getScreen() {
-		return $this->screen;
+	public function getScreens() {
+		return $this->screens;
 	}
 
 	/**
 	 * Set the screens the notice will be displayed
 	 *
-	 * @param array $screen
+	 * @param array $screens
 	 *
 	 * @return $this
 	 */
-	public function setScreen( Array $screen ) {
-		$this->screen = $screen;
+	public function setScreens( Array $screens ) {
+		$this->screens = $screens;
 
 		return $this;
 	}
