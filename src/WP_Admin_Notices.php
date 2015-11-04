@@ -25,7 +25,10 @@ namespace Notices;
  * @since   2.0.0
  */
 class WP_Admin_Notices {
-
+	/**
+	 * $_POST or $_GET request var name for killing sticky notices
+	 */
+	const KILL_STICKY_NTC_VAR = 'rm_ntc';
 	/**
 	 * Instance of this class.
 	 *
@@ -87,17 +90,76 @@ class WP_Admin_Notices {
 	 * Just echoes notices that should be displayed.
 	 */
 	public function displayNotices() {
-		foreach ( $this->notices as $key => $notice ) {
+		foreach ( $this->notices as $ntcId => $notice ) {
 			/* @var WP_Notice $notice */
-			if ( $this->isTimeToDisplay( $notice ) ) {
+			if ( $this->isTimeToDisplayNtc( $notice ) ) {
 				echo $notice->getContentFormatted();
 				$notice->incrementDisplayedTimes();
 			}
-			if ( $notice->isTimeToDie() ) {
-				unset( $this->notices[ $key ] );
+			if ( $this->isTimeToKillNtc( $notice ) ) {
+				unset( $this->notices[ $ntcId ] );
 			}
 		}
 		$this->storeNotices();
+	}
+
+	/**
+	 * @param WP_Notice $notice
+	 *
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	private function isTimeToKillNtc( WP_Notice $notice ) {
+		if ( $notice->isSticky() ) {
+			return $this->isTimeToKillStickyNtc( $notice );
+		}
+
+		$ntcUsers = $notice->getUsers();
+		if ( empty( $ntcUsers ) ) {
+			return $this->ntcExceededMaxTimesToDisplay( $notice );
+		}
+
+		$displayedSum = 0;
+		foreach ( $ntcUsers as $userId ) {
+			$displayedSum += $notice->maybeInitDisplayedToUsers( $userId );
+		}
+
+		if ( ( count( $notice->getUsers() ) * $notice->getTimes() ) <= $displayedSum ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if it is time to die for sticky notices
+	 *
+	 * @param WP_Notice $notice
+	 *
+	 * @return bool
+	 * @throws \BadMethodCallException if this method is called for a non sticky message
+	 *
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	private function isTimeToKillStickyNtc( WP_Notice &$notice ) {
+		if ( ! $notice->isSticky() ) {
+			throw new \BadMethodCallException( __METHOD__ . ' should not be called for non sticky notices' );
+		}
+
+		if ( ! isset( $_REQUEST[ self::KILL_STICKY_NTC_VAR ] ) || $_REQUEST[ self::KILL_STICKY_NTC_VAR ] != $notice->getId() ) {
+			return false;
+		}
+
+		$ntcUsers = $notice->getUsers();
+
+		if ( isset( $ntcUsers[ get_current_user_id() ] ) ) {
+			unset( $ntcUsers[ get_current_user_id() ] );
+			$notice->setUsers( $ntcUsers );
+		}
+
+		return empty( $ntcUsers );
 	}
 
 	/**
@@ -107,8 +169,10 @@ class WP_Admin_Notices {
 	 *
 	 * @return bool
 	 */
-	private function isTimeToDisplay( WP_Notice $notice ) {
-		return $this->isTimeToDisplayForScreen( $notice ) && $this->isTimeToDisplayForUser( $notice ) && ! $this->noticeExceededMaxTimesToDisplay( $notice );
+	private function isTimeToDisplayNtc( WP_Notice $notice ) {
+		return $this->isTimeToDisplayNtcForScreen( $notice )
+		       && $this->isTimeToDisplayNtcForUser( $notice )
+		       && ! $this->ntcExceededMaxTimesToDisplay( $notice );
 	}
 
 	/**
@@ -118,7 +182,7 @@ class WP_Admin_Notices {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
-	private function isTimeToDisplayForScreen( WP_Notice $notice ) {
+	private function isTimeToDisplayNtcForScreen( WP_Notice $notice ) {
 		$screens = $notice->getScreens();
 		if ( ! empty( $screens ) ) {
 			$curScreen = get_current_screen();
@@ -137,7 +201,7 @@ class WP_Admin_Notices {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
-	private function isTimeToDisplayForUser( WP_Notice $notice ) {
+	private function isTimeToDisplayNtcForUser( WP_Notice $notice ) {
 		$usersArray = $notice->getUsers();
 		if ( ! empty( $usersArray ) ) {
 			$curUser = get_current_user_id();
@@ -158,7 +222,11 @@ class WP_Admin_Notices {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
-	private function noticeExceededMaxTimesToDisplay( WP_Notice $notice ) {
+	private function ntcExceededMaxTimesToDisplay( WP_Notice $notice ) {
+		if ( $notice->isSticky() ) {
+			return false;
+		}
+
 		return $notice->getTimes() > $notice->getDisplayedTimes();
 	}
 
@@ -190,7 +258,7 @@ class WP_Admin_Notices {
 	 *
 	 * @param WP_Notice $notice
 	 */
-	public function addNotice( WP_Notice $notice ) {
+	public function addNotice( WP_Notice &$notice ) {
 		$this->notices[] = $notice;
 		$this->storeNotices();
 	}

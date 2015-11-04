@@ -13,6 +13,7 @@ namespace Notices;
 
 use Notices\Formatters\Formatter;
 use Notices\Formatters\WordPress;
+use Notices\Formatters\WordPressSticky;
 
 
 /**
@@ -21,7 +22,18 @@ use Notices\Formatters\WordPress;
  * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
  */
 abstract class WP_Notice {
-
+	/**
+	 * Notice Type Error
+	 */
+	const TYPE_ERROR = 'error';
+	/**
+	 * Notice Type Updated
+	 */
+	const TYPE_UPDATED = 'updated';
+	/**
+	 *  Notice Type Updated Nag
+	 */
+	const TYPE_UPDATED_NAG = 'update-nag';
 	/**
 	 * Notice message to be displayed
 	 *
@@ -89,22 +101,41 @@ abstract class WP_Notice {
 	 * @var Formatter
 	 */
 	protected $formatter;
+	/**
+	 * @var bool
+	 */
+	protected $sticky = false;
 
 	/**
 	 *
 	 * @param string $content Content to be displayed
 	 * @param string $title   Title of the notice, optional default is empty string.
+	 * @param string $type    Type of the notice, must be one of {@link self::TYPE_UPDATED}, {@link self::TYPE_ERROR},
+	 *                        {@link self::TYPE_UPDATED_NAG}. Defaults to {@link self::TYPE_UPDATED}.
 	 * @param int    $times   How many times this notice will be displayed
-	 * @param array  $screen  The admin screens this notice will be displayed into (empty for all screens)
+	 * @param array  $screens The admin screens this notice will be displayed into (empty for all screens)
 	 * @param array  $users   Array of users this notice concerns (empty for all users)
 	 */
-	public function __construct( $content, $title = '', $times = 1, Array $screen = array(), Array $users = array() ) {
-		$this->content = $content;
-		$this->title   = $title;
-		$this->screens  = $screen;
-		$this->id      = uniqid(md5($content), true);
-		$this->times   = $times;
-		$this->users   = $users;
+	public function __construct(
+		$content,
+		$title = '',
+		$type = self::TYPE_UPDATED,
+		$times = 1,
+		$screens = array(),
+		$users = array()
+	) {
+		$this->id = uniqid( md5( $content ), true );
+
+		$this->content = $this->setContent( $content );
+		$this->title   = $this->setTitle( $title );
+		$this->screens = $this->setScreens( (array) $screens );
+		$this->times   = $this->setTimes( $times );
+		$this->users   = $this->setUsers( (array) $users );
+
+		if ( ! in_array( $type, array( self::TYPE_UPDATED_NAG, self::TYPE_UPDATED, self::TYPE_ERROR ) ) ) {
+			$type = self::TYPE_UPDATED;
+		}
+		$this->type = $type;
 	}
 
 	/**
@@ -113,9 +144,24 @@ abstract class WP_Notice {
 	 * @return string Formatted content
 	 */
 	public function getContentFormatted() {
-		$formatter = $this->formatter ? $this->formatter : new WordPress();
+		if ( ! $this->formatter ) {
+			$this->formatter = $this->getDefaultFormatter();
+		}
 
-		return $formatter->formatOutput( $this );
+		return $this->formatter->formatOutput( $this );
+	}
+
+	/**
+	 * @return WordPress|WordPressSticky
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	protected function getDefaultFormatter() {
+		if ( $this->isSticky() ) {
+			return new WordPressSticky();
+		}
+
+		return new WordPress();
 	}
 
 	/**
@@ -134,7 +180,7 @@ abstract class WP_Notice {
 	 * @return $this
 	 */
 	public function setContent( $content ) {
-		$this->content = $content;
+		$this->content = (string) $content;
 
 		return $this;
 	}
@@ -148,7 +194,8 @@ abstract class WP_Notice {
 		$this->displayedTimes ++;
 
 		$userId = get_current_user_id();
-		$this->displayedToUsers[ $userId ] = $this->maybeInitDisplayedToUsers($userId) + 1;
+
+		$this->displayedToUsers[ $userId ] = $this->maybeInitDisplayedToUsers( $userId ) + 1;
 
 		return $this;
 	}
@@ -162,10 +209,11 @@ abstract class WP_Notice {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.1
 	 */
-	protected function maybeInitDisplayedToUsers($userId){
+	public function maybeInitDisplayedToUsers( $userId ) {
 		if ( ! array_key_exists( $userId, $this->displayedToUsers ) ) {
 			$this->displayedToUsers[ $userId ] = 0;
 		}
+
 		return $this->displayedToUsers[ $userId ];
 	}
 
@@ -173,6 +221,7 @@ abstract class WP_Notice {
 	 * Checks if the notice should me destroyed
 	 *
 	 * @return boolean True iff notice is deprecated
+	 * @deprecated as of v2.0.1
 	 */
 	public function isTimeToDie() {
 		if ( empty( $this->users ) ) {
@@ -181,7 +230,7 @@ abstract class WP_Notice {
 
 		$displayedSum = 0;
 		foreach ( $this->users as $userId ) {
-			$displayedSum += $this->maybeInitDisplayedToUsers($userId);
+			$displayedSum += $this->maybeInitDisplayedToUsers( $userId );
 		}
 		if ( ( count( $this->users ) * $this->times ) <= $displayedSum ) {
 			return true;
@@ -206,8 +255,8 @@ abstract class WP_Notice {
 	 *
 	 * @return $this
 	 */
-	public function setScreens( Array $screens ) {
-		$this->screens = $screens;
+	public function setScreens( $screens ) {
+		$this->screens = (array) $screens;
 
 		return $this;
 	}
@@ -235,7 +284,7 @@ abstract class WP_Notice {
 	 * @return $this
 	 */
 	public function setTimes( $times ) {
-		$this->times = $times;
+		$this->times = (int) $times;
 
 		return $this;
 	}
@@ -255,7 +304,7 @@ abstract class WP_Notice {
 	 * @return $this
 	 */
 	public function setUsers( Array $users ) {
-		$this->users = $users;
+		$this->users = (array) $users;
 
 		return $this;
 	}
@@ -275,7 +324,7 @@ abstract class WP_Notice {
 	 * @return $this
 	 */
 	public function setDisplayedTimes( $displayedTimes ) {
-		$this->displayedTimes = $displayedTimes;
+		$this->displayedTimes = (int) $displayedTimes;
 
 		return $this;
 	}
@@ -294,8 +343,8 @@ abstract class WP_Notice {
 	 *
 	 * @return $this
 	 */
-	public function setDisplayedToUsers( Array $displayedToUsers ) {
-		$this->displayedToUsers = $displayedToUsers;
+	public function setDisplayedToUsers( $displayedToUsers ) {
+		$this->displayedToUsers = (array) $displayedToUsers;
 
 		return $this;
 	}
@@ -317,7 +366,7 @@ abstract class WP_Notice {
 	 * @since  2.0.0
 	 */
 	public function setTitle( $title ) {
-		$this->title = $title;
+		$this->title = (string) $title;
 
 		return $this;
 	}
@@ -355,5 +404,27 @@ abstract class WP_Notice {
 	 */
 	public function getType() {
 		return $this->type;
+	}
+
+	/**
+	 * @return boolean
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function isSticky() {
+		return $this->sticky;
+	}
+
+	/**
+	 * @param boolean $sticky
+	 *
+	 * @return $this
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function setSticky( $sticky ) {
+		$this->sticky = (bool) $sticky;
+
+		return $this;
 	}
 }
