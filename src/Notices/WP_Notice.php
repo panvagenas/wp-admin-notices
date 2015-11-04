@@ -9,11 +9,11 @@
  * Copyright: 2015 Panagiotis Vagenas
  */
 
-namespace Notices;
+namespace Pan\Notices;
 
-use Notices\Formatters\Formatter;
-use Notices\Formatters\WordPress;
-use Notices\Formatters\WordPressSticky;
+use Pan\Notices\Formatters\Formatter;
+use Pan\Notices\Formatters\WordPress;
+use Pan\Notices\Formatters\WordPressSticky;
 
 
 /**
@@ -384,13 +384,13 @@ abstract class WP_Notice {
 	 * @param Formatter $formatter
 	 *
 	 * @return $this
-	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link \Notices\Formatters\Formatter}
+	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link \Pan\Notices\Formatters\Formatter}
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
 	public function setFormatter( $formatter ) {
 		if ( ! ( $formatter instanceof Formatter ) ) {
-			throw new \InvalidArgumentException( 'Notice Formatter must be an instance of Notices\\Formatters\\Formatter' );
+			throw new \InvalidArgumentException( 'Notice Formatter must be an instance of Pan\Notices\\Formatters\\Formatter' );
 		}
 		$this->formatter = $formatter;
 

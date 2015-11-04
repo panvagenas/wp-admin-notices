@@ -9,10 +9,10 @@
  * Copyright: 2015 Panagiotis Vagenas
  */
 
-namespace Notices\Formatters;
+namespace Pan\Notices\Formatters;
 
 
-use Notices\WP_Notice;
+use Pan\Notices\WP_Notice;
 
 class WordPressSticky extends Formatter{
 	public function formatOutput( WP_Notice $notice ) {

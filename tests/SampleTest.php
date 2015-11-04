@@ -11,6 +11,6 @@
  */
 class SampleTest extends WP_UnitTestCase{
 	public function test(){
-		$this->assertTrue(\Notices\WP_Admin_Notices::getInstance() instanceof \Notices\WP_Admin_Notices);
+		$this->assertTrue(\Pan\Notices\WP_Admin_Notices::getInstance() instanceof \Pan\Notices\WP_Admin_Notices);
 	}
 }

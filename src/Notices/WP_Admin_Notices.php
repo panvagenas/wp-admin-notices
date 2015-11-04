@@ -9,7 +9,7 @@
  * Copyright: 2015 Panagiotis Vagenas
  */
 
-namespace Notices;
+namespace Pan\Notices;
 
 
 	/**
@@ -20,7 +20,7 @@ namespace Notices;
 /**
  * Class WP_Admin_Notices
  *
- * @package Notices
+ * @package Pan\Notices
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
  * @since   2.0.0
  */

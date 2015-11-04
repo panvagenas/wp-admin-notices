@@ -22,9 +22,9 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
-        "files": ["src/init.php"],
+        "files": ["src/Notices/init.php"],
         "psr-4": {
-            "Notices\\": "src"
+            "Pan\\": "src"
         }
     },
     "archive": {
