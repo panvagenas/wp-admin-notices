@@ -58,7 +58,6 @@ class WP_Admin_Notices {
 	 */
 	private function __construct() {
 		$this->loadNotices();
-		add_action( 'admin_notices', array( $this, 'displayNotices' ) );
 	}
 
 	/**

@@ -8,10 +8,18 @@
  * Since: 2.0.0
  * Copyright: 2015 Panagiotis Vagenas
  */
+namespace Pan\Notices;
 
-/**
- * Hook action to admin init
- */
-if ( ! has_action( 'admin_init', array( 'Pan\Notices\WP_Admin_Notices', 'getInstance' ) ) ) {
-	add_action( 'admin_init', array( 'Pan\Notices\WP_Admin_Notices', 'getInstance' ) );
+if ( ! has_action( 'admin_init', '\Pan\Notices\addAdminNoticesAction' ) ) {
+	add_action( 'admin_init',  '\Pan\Notices\addAdminNoticesAction');
+}
+
+if(!function_exists('\Pan\Notices\addAdminNoticesAction')) {
+	/**
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	function addAdminNoticesAction() {
+		add_action( 'admin_notices', array( WP_Admin_Notices::getInstance(), 'displayNotices' ) );
+	}
 }
