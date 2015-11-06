@@ -30,7 +30,7 @@ class WordPress implements FormatterInterface {
 	 * @since  2.0.0
 	 */
 	public function formatOutput( WP_Notice $notice ) {
-		$out   = "
+		$out = "
 		<div style=\"position: relative;\" class=\"{$notice->getType()}\">
 			<h4 style=\"margin-top: 4px; margin-bottom: 0;\">{$notice->getTitle()}</h4>
 			<p>

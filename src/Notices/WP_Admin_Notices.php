@@ -130,48 +130,6 @@ class WP_Admin_Notices {
 	}
 
 	/**
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  2.0.1
-	 */
-	public function ajaxDismissNotice() {
-		check_ajax_referer( self::KILL_STICKY_NTC_AJAX_ACTION, self::KILL_STICKY_NTC_AJAX_NONCE_VAR );
-
-		$noticeId = $_POST[ self::KILL_STICKY_NTC_AJAX_NTC_ID_VAR ];
-
-		if ( $notice = $this->getNotice( $noticeId ) ) {
-			/* @var WP_Notice $notice */
-			$notice->removeUser( get_current_user_id() );
-
-			if ( $notice->countUsers() === 0 ) {
-				$this->deleteNotice( $notice->getId() );
-			}
-
-			$this->storeNotices();
-
-			wp_send_json_success();
-			die( 0 );
-		}
-
-		wp_send_json_error( 'Not permitted' );
-		die( 0 );
-	}
-
-	/**
-	 * @param WP_Notice $notice
-	 *
-	 * @return bool
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
-	 */
-	private function isTimeToKillNtc( WP_Notice $notice ) {
-		if ( $notice->isSticky() ) {
-			return false;
-		}
-
-		return $notice->exceededMaxTimesToDisplay();
-	}
-
-	/**
 	 * Checks if is time to display a notice
 	 *
 	 * @param WP_Notice $notice
@@ -179,9 +137,6 @@ class WP_Admin_Notices {
 	 * @return bool
 	 */
 	private function isTimeToDisplayNtc( WP_Notice $notice ) {
-		var_dump($this->isTimeToDisplayNtcForScreen( $notice )
-				, $this->isTimeToDisplayNtcForUser( $notice )
-				, ! $this->ntcExceededMaxTimesToDisplay( $notice ), $notice);
 		return $this->isTimeToDisplayNtcForScreen( $notice )
 		       && $this->isTimeToDisplayNtcForUser( $notice )
 		       && ! $this->ntcExceededMaxTimesToDisplay( $notice );
@@ -215,7 +170,7 @@ class WP_Admin_Notices {
 	 */
 	private function isTimeToDisplayNtcForUser( WP_Notice $notice ) {
 		$curUser = get_current_user_id();
-		if ( $notice->countUsers() !== 0 && ! $notice->hasUser($curUser)) {
+		if ( $notice->countUsers() !== 0 && ! $notice->hasUser( $curUser ) ) {
 			return false;
 		}
 
@@ -238,10 +193,70 @@ class WP_Admin_Notices {
 	}
 
 	/**
+	 * @param WP_Notice $notice
+	 *
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	private function isTimeToKillNtc( WP_Notice $notice ) {
+		if ( $notice->isSticky() ) {
+			return false;
+		}
+
+		return $notice->exceededMaxTimesToDisplay();
+	}
+
+	/**
 	 * Stores notices in DB
 	 */
 	private function storeNotices() {
 		update_option( $this->noticesArrayName, $this->notices );
+	}
+
+	/**
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.0.1
+	 */
+	public function ajaxDismissNotice() {
+		check_ajax_referer( self::KILL_STICKY_NTC_AJAX_ACTION, self::KILL_STICKY_NTC_AJAX_NONCE_VAR );
+
+		$noticeId = $_POST[ self::KILL_STICKY_NTC_AJAX_NTC_ID_VAR ];
+
+		if ( $notice = $this->getNotice( $noticeId ) ) {
+			/* @var WP_Notice $notice */
+			$notice->removeUser( get_current_user_id() );
+
+			if ( $notice->countUsers() === 0 ) {
+				$this->deleteNotice( $notice->getId() );
+			}
+
+			$this->storeNotices();
+
+			wp_send_json_success();
+			die( 0 );
+		}
+
+		wp_send_json_error( 'Not permitted' );
+		die( 0 );
+	}
+
+	/**
+	 * @param $noticeId
+	 *
+	 * @return null|WP_Notice
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function getNotice( $noticeId ) {
+		foreach ( $this->notices as $key => $notice ) {
+			/* @var WP_Notice $notice */
+			if ( $notice->getId() === $noticeId ) {
+				return $notice;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -268,23 +283,5 @@ class WP_Admin_Notices {
 	public function addNotice( WP_Notice &$notice ) {
 		$this->notices[] = $notice;
 		$this->storeNotices();
-	}
-
-	/**
-	 * @param $noticeId
-	 *
-	 * @return null|WP_Notice
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
-	 */
-	public function getNotice( $noticeId ) {
-		foreach ( $this->notices as $key => $notice ) {
-			/* @var WP_Notice $notice */
-			if ( $notice->getId() === $noticeId ) {
-				return $notice;
-			}
-		}
-
-		return null;
 	}
 }

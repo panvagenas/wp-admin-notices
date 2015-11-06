@@ -11,7 +11,7 @@
 
 namespace Pan\Notices;
 
-if(defined('WPINC')) {
+if ( defined( 'WPINC' ) ) {
 	$displayNtcCallback = array( WP_Admin_Notices::getInstance(), 'displayNotices' );
 
 	if ( ! has_action( 'admin_notices', $displayNtcCallback ) ) {
@@ -21,6 +21,6 @@ if(defined('WPINC')) {
 	$dismissNtcCallback = array( WP_Admin_Notices::getInstance(), 'ajaxDismissNotice' );
 
 	if ( ! has_action( 'admin_notices', $dismissNtcCallback ) ) {
-		add_action( 'wp_ajax_'.WP_Admin_Notices::KILL_STICKY_NTC_AJAX_ACTION, $dismissNtcCallback );
+		add_action( 'wp_ajax_' . WP_Admin_Notices::KILL_STICKY_NTC_AJAX_ACTION, $dismissNtcCallback );
 	}
 }

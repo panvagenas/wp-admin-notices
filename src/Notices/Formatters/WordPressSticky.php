@@ -31,7 +31,7 @@ class WordPressSticky implements FormatterInterface {
 	 * @since  TODO ${VERSION}
 	 */
 	public function formatOutput( WP_Notice $notice ) {
-		$unqId = uniqid( preg_replace('/[^a-z0-9A-Z]/', '', $notice->getId()) );
+		$unqId = uniqid( preg_replace( '/[^a-z0-9A-Z]/', '', $notice->getId() ) );
 		$out   = "
 		<div style=\"position: relative;\" class=\"{$notice->getType()}\">
 			<h4 style=\"margin-top: 4px; margin-bottom: 0;\">{$notice->getTitle()}</h4>

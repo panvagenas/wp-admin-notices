@@ -111,12 +111,12 @@ class WP_Notice {
 	 * @param array  $users   Array of user ids this notice concerns (empty for all users)
 	 */
 	public function __construct(
-			$content,
-			$title = '',
-			$type = self::TYPE_UPDATED,
-			$times = 1,
-			$screens = array(),
-			$users = array()
+		$content,
+		$title = '',
+		$type = self::TYPE_UPDATED,
+		$times = 1,
+		$screens = array(),
+		$users = array()
 	) {
 		$this->id = uniqid( md5( $content ), true );
 
@@ -141,8 +141,8 @@ class WP_Notice {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  TODO ${VERSION}
 	 */
-	public function countUsers(){
-		return count($this->users) - 1;
+	public function countUsers() {
+		return count( $this->users ) - 1;
 	}
 
 	/**
@@ -230,7 +230,7 @@ class WP_Notice {
 	 * @since  TODO ${VERSION}
 	 */
 	public function getDisplayedTimes() {
-		return $this->getDisplayedTimesForUser(0);
+		return $this->getDisplayedTimesForUser( 0 );
 	}
 
 	/**
@@ -240,8 +240,8 @@ class WP_Notice {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  TODO ${VERSION}
 	 */
-	public function getDisplayedTimesForUser($userId){
-		return $this->hasUser($userId) ? $this->users[$userId] : 0;
+	public function getDisplayedTimesForUser( $userId ) {
+		return $this->hasUser( $userId ) ? $this->users[ $userId ] : 0;
 	}
 
 	/**
@@ -251,10 +251,10 @@ class WP_Notice {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  TODO ${VERSION}
 	 */
-	public function exceededMaxTimesToDisplayForUser($userId){
-		$userId = (int)$userId;
+	public function exceededMaxTimesToDisplayForUser( $userId ) {
+		$userId = (int) $userId;
 
-		if($this->hasUser($userId) && $this->users[$userId] < $this->times){
+		if ( $this->hasUser( $userId ) && $this->users[ $userId ] < $this->times ) {
 			return false;
 		}
 
@@ -266,14 +266,15 @@ class WP_Notice {
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  TODO ${VERSION}
 	 */
-	public function exceededMaxTimesToDisplay(){
+	public function exceededMaxTimesToDisplay() {
 		$timesCounter = 0;
 
 		foreach ( $this->getUsers() as $userTimes ) {
-			if($userTimes >= $this->times){
-				$timesCounter++;
+			if ( $userTimes >= $this->times ) {
+				$timesCounter ++;
 			}
 		}
+
 		return $timesCounter >= $this->countUsers();
 	}
 
@@ -315,8 +316,8 @@ class WP_Notice {
 	public function removeUser( $userId ) {
 		$userId = (int) $userId;
 
-		if ( $userId > 0 && $this->hasUser($userId)) {
-			unset($this->users[$userId]);
+		if ( $userId > 0 && $this->hasUser( $userId ) ) {
+			unset( $this->users[ $userId ] );
 		}
 
 		return $this;
@@ -378,7 +379,8 @@ class WP_Notice {
 	 */
 	public function getUsers() {
 		$users = $this->users;
-		unset($users[0]);
+		unset( $users[0] );
+
 		return $users;
 	}
 
@@ -417,7 +419,8 @@ class WP_Notice {
 	 * @param FormatterInterface $formatter
 	 *
 	 * @return $this
-	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link \Pan\Notices\Formatters\FormatterInterface}
+	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link
+	 *                                   \Pan\Notices\Formatters\FormatterInterface}
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
