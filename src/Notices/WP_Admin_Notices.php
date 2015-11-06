@@ -17,12 +17,26 @@ namespace Pan\Notices;
 	 *
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 */
+	/**
+	 * Class WP_Admin_Notices
+	 *
+	 * @package Pan\Notices
+	 * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since   2.0.0
+	 */
+	/**
+	 * Class WP_Admin_Notices
+	 *
+	 * @package Pan\Notices
+	 * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since   TODO ${VERSION}
+	 */
 /**
  * Class WP_Admin_Notices
  *
  * @package Pan\Notices
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
- * @since   2.0.0
+ * @since   TODO ${VERSION}
  */
 class WP_Admin_Notices {
 	/**
@@ -124,9 +138,13 @@ class WP_Admin_Notices {
 
 		$noticeId = $_POST[ self::KILL_STICKY_NTC_AJAX_NTC_ID_VAR ];
 
-		if ( $notice = $this > $this->getNotice( $noticeId ) ) {
+		if ( $notice = $this->getNotice( $noticeId ) ) {
 			/* @var WP_Notice $notice */
 			$notice->removeUser( get_current_user_id() );
+
+			if ( $notice->countUsers() === 0 ) {
+				$this->deleteNotice( $notice->getId() );
+			}
 
 			$this->storeNotices();
 
@@ -150,21 +168,7 @@ class WP_Admin_Notices {
 			return false;
 		}
 
-		$ntcUsers = $notice->getUsers();
-		if ( empty( $ntcUsers ) ) {
-			return $this->ntcExceededMaxTimesToDisplay( $notice );
-		}
-
-		$displayedSum = 0;
-		foreach ( $ntcUsers as $userId ) {
-			$displayedSum += $notice->maybeInitDisplayedToUsers( $userId );
-		}
-
-		if ( ( count( $notice->getUsers() ) * $notice->getTimes() ) <= $displayedSum ) {
-			return true;
-		}
-
-		return false;
+		return $notice->exceededMaxTimesToDisplay();
 	}
 
 	/**
@@ -175,6 +179,9 @@ class WP_Admin_Notices {
 	 * @return bool
 	 */
 	private function isTimeToDisplayNtc( WP_Notice $notice ) {
+		var_dump($this->isTimeToDisplayNtcForScreen( $notice )
+				, $this->isTimeToDisplayNtcForUser( $notice )
+				, ! $this->ntcExceededMaxTimesToDisplay( $notice ), $notice);
 		return $this->isTimeToDisplayNtcForScreen( $notice )
 		       && $this->isTimeToDisplayNtcForUser( $notice )
 		       && ! $this->ntcExceededMaxTimesToDisplay( $notice );
@@ -207,14 +214,9 @@ class WP_Admin_Notices {
 	 * @since  2.0.0
 	 */
 	private function isTimeToDisplayNtcForUser( WP_Notice $notice ) {
-		$usersArray = $notice->getUsers();
-		if ( ! empty( $usersArray ) ) {
-			$curUser = get_current_user_id();
-			if ( ! is_array( $usersArray ) || ! in_array( $curUser,
-					$usersArray ) || $usersArray[ $curUser ] >= $notice->getTimes()
-			) {
-				return false;
-			}
+		$curUser = get_current_user_id();
+		if ( $notice->countUsers() !== 0 && ! $notice->hasUser($curUser)) {
+			return false;
 		}
 
 		return true;

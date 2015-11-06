@@ -11,7 +11,7 @@
 
 namespace Pan\Notices;
 
-use Pan\Notices\Formatters\Formatter;
+use Pan\Notices\Formatters\FormatterInterface;
 use Pan\Notices\Formatters\WordPress;
 use Pan\Notices\Formatters\WordPressSticky;
 
@@ -77,29 +77,22 @@ class WP_Notice {
 	protected $times = 1;
 
 	/**
-	 * User ids this notice should be displayed
-	 * [i => $userId]
+	 * Array index are the user ids this notice should be displayed, values are
+	 * the displayed times for each user.
+	 *
+	 * Index `0` yields total displayed times
+	 *
+	 * `[
+	 *      0 => $totalDisplayedTimes
+	 *      $userId => $displayedTimesForUser
+	 * ]`
 	 *
 	 * @var array
 	 */
 	protected $users = array();
 
 	/**
-	 * Number of times this message is displayed
-	 *
-	 * @var int
-	 */
-	protected $displayedTimes = 0;
-
-	/**
-	 * Keeps track of how many times and to
-	 * which users this notice is displayed
-	 *
-	 * @var array
-	 */
-	protected $displayedToUsers = array();
-	/**
-	 * @var Formatter
+	 * @var FormatterInterface
 	 */
 	protected $formatter;
 	/**
@@ -115,15 +108,15 @@ class WP_Notice {
 	 *                        {@link self::TYPE_UPDATED_NAG}. Defaults to {@link self::TYPE_UPDATED}.
 	 * @param int    $times   How many times this notice will be displayed
 	 * @param array  $screens The admin screens this notice will be displayed into (empty for all screens)
-	 * @param array  $users   Array of users this notice concerns (empty for all users)
+	 * @param array  $users   Array of user ids this notice concerns (empty for all users)
 	 */
 	public function __construct(
-		$content,
-		$title = '',
-		$type = self::TYPE_UPDATED,
-		$times = 1,
-		$screens = array(),
-		$users = array()
+			$content,
+			$title = '',
+			$type = self::TYPE_UPDATED,
+			$times = 1,
+			$screens = array(),
+			$users = array()
 	) {
 		$this->id = uniqid( md5( $content ), true );
 
@@ -131,12 +124,25 @@ class WP_Notice {
 		$this->setTitle( $title );
 		$this->setScreens( (array) $screens );
 		$this->setTimes( $times );
-		$this->setUsers( (array) $users );
+
+		foreach ( $users as $userId ) {
+			$this->addUser( $userId );
+		}
+		$this->addUser( 0 );
 
 		if ( ! in_array( $type, array( self::TYPE_UPDATED_NAG, self::TYPE_UPDATED, self::TYPE_ERROR ) ) ) {
 			$type = self::TYPE_UPDATED;
 		}
 		$this->type = $type;
+	}
+
+	/**
+	 * @return int
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function countUsers(){
+		return count($this->users) - 1;
 	}
 
 	/**
@@ -192,11 +198,11 @@ class WP_Notice {
 	 * @return $this
 	 */
 	public function incrementDisplayedTimes() {
-		$this->displayedTimes ++;
+		$this->users[0] ++;
 
 		$userId = get_current_user_id();
 
-		$this->displayedToUsers[ $userId ] = $this->maybeInitDisplayedToUsers( $userId ) + 1;
+		$this->users[ $userId ] = $this->maybeInitDisplayedToUsers( $userId ) + 1;
 
 		return $this;
 	}
@@ -211,33 +217,64 @@ class WP_Notice {
 	 * @since  2.0.1
 	 */
 	public function maybeInitDisplayedToUsers( $userId ) {
-		if ( ! array_key_exists( $userId, $this->displayedToUsers ) ) {
-			$this->displayedToUsers[ $userId ] = 0;
+		if ( ! $this->hasUser( $userId ) ) {
+			$this->addUser( $userId );
 		}
 
-		return $this->displayedToUsers[ $userId ];
+		return $this->users[ $userId ];
 	}
 
 	/**
-	 * Checks if the notice should me destroyed
-	 *
-	 * @return boolean True iff notice is deprecated
-	 * @deprecated as of v2.0.1
+	 * @return int
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
 	 */
-	public function isTimeToDie() {
-		if ( empty( $this->users ) ) {
-			return $this->displayedTimes >= $this->times;
+	public function getDisplayedTimes() {
+		return $this->getDisplayedTimesForUser(0);
+	}
+
+	/**
+	 * @param $userId
+	 *
+	 * @return int
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function getDisplayedTimesForUser($userId){
+		return $this->hasUser($userId) ? $this->users[$userId] : 0;
+	}
+
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function exceededMaxTimesToDisplayForUser($userId){
+		$userId = (int)$userId;
+
+		if($this->hasUser($userId) && $this->users[$userId] < $this->times){
+			return false;
 		}
 
-		$displayedSum = 0;
-		foreach ( $this->users as $userId ) {
-			$displayedSum += $this->maybeInitDisplayedToUsers( $userId );
-		}
-		if ( ( count( $this->users ) * $this->times ) <= $displayedSum ) {
-			return true;
-		}
+		return true;
+	}
 
-		return false;
+	/**
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function exceededMaxTimesToDisplay(){
+		$timesCounter = 0;
+
+		foreach ( $this->getUsers() as $userTimes ) {
+			if($userTimes >= $this->times){
+				$timesCounter++;
+			}
+		}
+		return $timesCounter >= $this->countUsers();
 	}
 
 	/**
@@ -248,7 +285,7 @@ class WP_Notice {
 	 * @since  TODO ${VERSION}
 	 */
 	public function hasUser( $userId ) {
-		return in_array( (int) $userId, $this->users );
+		return array_key_exists( (int) $userId, $this->users );
 	}
 
 	/**
@@ -261,7 +298,9 @@ class WP_Notice {
 	public function addUser( $userId ) {
 		$userId = (int) $userId;
 
-		$this->users[ $userId ] = $userId;
+		if ( ! $this->hasUser( $userId ) ) {
+			$this->users[ $userId ] = 0;
+		}
 
 		return $this;
 	}
@@ -276,8 +315,8 @@ class WP_Notice {
 	public function removeUser( $userId ) {
 		$userId = (int) $userId;
 
-		if ( isset( $this->users[ $userId ] ) ) {
-			unset( $this->users[ $userId ] );
+		if ( $userId > 0 && $this->hasUser($userId)) {
+			unset($this->users[$userId]);
 		}
 
 		return $this;
@@ -338,61 +377,9 @@ class WP_Notice {
 	 * @return array
 	 */
 	public function getUsers() {
-		return $this->users;
-	}
-
-	/**
-	 *
-	 * @param array $users
-	 *
-	 * @return $this
-	 */
-	public function setUsers( Array $users ) {
-		foreach ( $users as $userId ) {
-			$this->addUser($userId);
-		}
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @return int
-	 */
-	public function getDisplayedTimes() {
-		return $this->displayedTimes;
-	}
-
-	/**
-	 *
-	 * @param int $displayedTimes
-	 *
-	 * @return $this
-	 */
-	public function setDisplayedTimes( $displayedTimes ) {
-		$this->displayedTimes = (int) $displayedTimes;
-
-		return $this;
-	}
-
-	/**
-	 *
-	 * @return array
-	 */
-	public function getDisplayedToUsers() {
-		return $this->displayedToUsers;
-	}
-
-	/**
-	 *
-	 * @param array $displayedToUsers
-	 *
-	 * @return $this
-	 */
-	public function setDisplayedToUsers( $displayedToUsers ) {
-		$this->displayedToUsers = (array) $displayedToUsers;
-
-		return $this;
+		$users = $this->users;
+		unset($users[0]);
+		return $users;
 	}
 
 	/**
@@ -418,7 +405,7 @@ class WP_Notice {
 	}
 
 	/**
-	 * @return Formatter
+	 * @return FormatterInterface
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
@@ -427,16 +414,16 @@ class WP_Notice {
 	}
 
 	/**
-	 * @param Formatter $formatter
+	 * @param FormatterInterface $formatter
 	 *
 	 * @return $this
-	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link \Pan\Notices\Formatters\Formatter}
+	 * @throws \InvalidArgumentException If $formatter isn't an instanceof {@link \Pan\Notices\Formatters\FormatterInterface}
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
 	 */
 	public function setFormatter( $formatter ) {
-		if ( ! ( $formatter instanceof Formatter ) ) {
-			throw new \InvalidArgumentException( 'Notice Formatter must be an instance of Pan\Notices\\Formatters\\Formatter' );
+		if ( ! ( $formatter instanceof FormatterInterface ) ) {
+			throw new \InvalidArgumentException( 'Notice FormatterInterface must be an instance of Pan\Notices\\Formatters\\FormatterInterface' );
 		}
 		$this->formatter = $formatter;
 

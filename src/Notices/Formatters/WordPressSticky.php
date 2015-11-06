@@ -22,7 +22,7 @@ use Pan\Notices\WP_Notice;
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
  * @since   TODO ${VERSION}
  */
-class WordPressSticky extends Formatter {
+class WordPressSticky implements FormatterInterface {
 	/**
 	 * @param WP_Notice $notice
 	 *
@@ -31,13 +31,14 @@ class WordPressSticky extends Formatter {
 	 * @since  TODO ${VERSION}
 	 */
 	public function formatOutput( WP_Notice $notice ) {
-		$unqId = uniqid( $notice->getId() );
+		$unqId = uniqid( preg_replace('/[^a-z0-9A-Z]/', '', $notice->getId()) );
 		$out   = "
 		<div style=\"position: relative;\" class=\"{$notice->getType()}\">
 			<h4 style=\"margin-top: 4px; margin-bottom: 0;\">{$notice->getTitle()}</h4>
 			<p>
 				{$notice->getContent()}
-				<a id=\"{$unqId}\" href=\"#\" style=\"font-size: 150%; position: absolute; right: 5px; top: -5px;\">×</a>
+				{$notice->getId()}
+				<a id=\"{$unqId}\" href=\"#\" style=\"font-size: 150%; position: absolute; right: 5px; top: -5px; text-decoration: none;\">×</a>
 			</p>
 		</div>
 		";
@@ -65,8 +66,13 @@ class WordPressSticky extends Formatter {
 					"' . WP_Admin_Notices::KILL_STICKY_NTC_AJAX_NONCE_VAR . '": "' . wp_create_nonce( WP_Admin_Notices::KILL_STICKY_NTC_AJAX_ACTION ) . '"
 				};
 
+				var $notice = $("#' . $unqId . '").parent().parent();
 				$("#' . $unqId . '").click(function(){
-					jQuery.post(ajaxurl, data);
+					jQuery.post(ajaxurl, data,
+						function(){
+							$notice.slideUp();
+						}
+					);
 				});
 			});
 		</script>

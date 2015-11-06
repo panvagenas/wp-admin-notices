@@ -21,7 +21,7 @@ use Pan\Notices\WP_Notice;
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
  * @since   2.0.0
  */
-class WordPress extends Formatter {
+class WordPress implements FormatterInterface {
 	/**
 	 * @param WP_Notice $notice
 	 *
@@ -30,13 +30,15 @@ class WordPress extends Formatter {
 	 * @since  2.0.0
 	 */
 	public function formatOutput( WP_Notice $notice ) {
-		$before = '<div class="' . $notice->getType() . '">';
-		if ( $notice->getTitle() ) {
-			$before .= "<h4>{$notice->getTitle()}</h4>";
-		}
-		$before .= '<p>';
-		$after = '</p></div>';
+		$out   = "
+		<div style=\"position: relative;\" class=\"{$notice->getType()}\">
+			<h4 style=\"margin-top: 4px; margin-bottom: 0;\">{$notice->getTitle()}</h4>
+			<p>
+				{$notice->getContent()}
+			</p>
+		</div>
+		";
 
-		return $before . $notice->getContent() . $after;
+		return $out;
 	}
 }
