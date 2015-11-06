@@ -27,8 +27,10 @@ before_script:
   - bash tests/bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
 
 script:
-  - phpunit --coverage-clover build/logs/clover.xml -c ./tests/config/phpunit.xml
+  - mkdir -p build/logs
+  - phpunit -c ./tests/config/phpunit.xml
   - phpunit --coverage-clover build/logs/clover.xml -c ./tests/config/phpunit-multisite.xml
 
 after_script:
   - php vendor/bin/codacycoverage clover build/logs/clover.xml
+  - php vendor/bin/coveralls -v
