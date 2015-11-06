@@ -14,12 +14,12 @@ php:
   - hhvm
 
 env:
-  - WP_VERSION=latest WP_MULTISITE=0
+  - WP_VERSION=latest WP_MULTISITE=0 CODACY_PROJECT_TOKEN=1cdfb91afc80407e99fffe8d092ab628
 
 matrix:
   include:
     - php: 5.3
-      env: WP_VERSION=latest WP_MULTISITE=1 CODACY_PROJECT_TOKEN=1cdfb91afc80407e99fffe8d092ab628
+      env: WP_VERSION=latest WP_MULTISITE=1
 
 before_script:
   - composer self-update

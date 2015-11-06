@@ -11,32 +11,12 @@
 
 namespace Pan\Notices;
 
-
-	/**
-	 * Singleton class of WP_Admin_Notices
-	 *
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 */
-	/**
-	 * Class WP_Admin_Notices
-	 *
-	 * @package Pan\Notices
-	 * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since   2.0.0
-	 */
-	/**
-	 * Class WP_Admin_Notices
-	 *
-	 * @package Pan\Notices
-	 * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since   TODO ${VERSION}
-	 */
 /**
  * Class WP_Admin_Notices
  *
  * @package Pan\Notices
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
- * @since   TODO ${VERSION}
+ * @since   1.0.0
  */
 class WP_Admin_Notices {
 	/**

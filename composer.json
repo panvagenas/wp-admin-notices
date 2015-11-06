@@ -2,7 +2,7 @@
     "name": "panvagenas/wp-admin-notices",
     "description": "A simple script to display WordPress notices to admin page",
     "license": "GPL-3.0+",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "authors": [
         {
             "name": "Panagiotis Vagenas",
