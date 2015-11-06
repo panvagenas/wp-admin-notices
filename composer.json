@@ -15,6 +15,7 @@
         "php": ">=5.3.0"
     },
     "require-dev": {
+        "codacy/coverage": "dev-master"
     },
     "config": {
         "optimize-autoloader": true
