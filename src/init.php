@@ -12,6 +12,6 @@
 /**
  * Hook action to admin init
  */
-if ( ! has_action( 'admin_init', array( 'Notices\WP_Admin_Notices', 'getInstance' ) ) ) {
+if ( function_exists('has_action') && ! has_action( 'admin_init', array( 'Notices\WP_Admin_Notices', 'getInstance' ) ) ) {
 	add_action( 'admin_init', array( 'Notices\WP_Admin_Notices', 'getInstance' ) );
 }
