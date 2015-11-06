@@ -21,7 +21,7 @@ use Pan\Notices\Formatters\WordPressSticky;
  *
  * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
  */
-abstract class WP_Notice {
+class WP_Notice {
 	/**
 	 * Notice Type Error
 	 */
@@ -78,6 +78,7 @@ abstract class WP_Notice {
 
 	/**
 	 * User ids this notice should be displayed
+	 * [i => $userId]
 	 *
 	 * @var array
 	 */
@@ -126,11 +127,11 @@ abstract class WP_Notice {
 	) {
 		$this->id = uniqid( md5( $content ), true );
 
-		$this->content = $this->setContent( $content );
-		$this->title   = $this->setTitle( $title );
-		$this->screens = $this->setScreens( (array) $screens );
-		$this->times   = $this->setTimes( $times );
-		$this->users   = $this->setUsers( (array) $users );
+		$this->setContent( $content );
+		$this->setTitle( $title );
+		$this->setScreens( (array) $screens );
+		$this->setTimes( $times );
+		$this->setUsers( (array) $users );
 
 		if ( ! in_array( $type, array( self::TYPE_UPDATED_NAG, self::TYPE_UPDATED, self::TYPE_ERROR ) ) ) {
 			$type = self::TYPE_UPDATED;
@@ -240,6 +241,49 @@ abstract class WP_Notice {
 	}
 
 	/**
+	 * @param $userId
+	 *
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function hasUser( $userId ) {
+		return in_array( (int) $userId, $this->users );
+	}
+
+	/**
+	 * @param $userId
+	 *
+	 * @return $this
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function addUser( $userId ) {
+		$userId = (int) $userId;
+
+		$this->users[ $userId ] = $userId;
+
+		return $this;
+	}
+
+	/**
+	 * @param $userId
+	 *
+	 * @return $this
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function removeUser( $userId ) {
+		$userId = (int) $userId;
+
+		if ( isset( $this->users[ $userId ] ) ) {
+			unset( $this->users[ $userId ] );
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Get the screens for the notice to be displayed
 	 *
 	 * @return string Current screens slug
@@ -304,7 +348,9 @@ abstract class WP_Notice {
 	 * @return $this
 	 */
 	public function setUsers( Array $users ) {
-		$this->users = (array) $users;
+		foreach ( $users as $userId ) {
+			$this->addUser($userId);
+		}
 
 		return $this;
 	}

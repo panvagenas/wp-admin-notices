@@ -15,7 +15,7 @@ use Pan\Notices\WP_Admin_Notices;
 
 class InitializationTest extends \WP_UnitTestCase {
 	public function testWpAdminNoticesInstantiation() {
-		do_action('admin_init');
+		do_action( 'admin_init' );
 		$wpAdminNotices = WP_Admin_Notices::getInstance();
 		$this->assertTrue( $wpAdminNotices instanceof WP_Admin_Notices );
 
@@ -25,12 +25,10 @@ class InitializationTest extends \WP_UnitTestCase {
 	}
 
 	public function testActionsAreSet() {
-		$this->assertFalse( is_int(has_action( 'admin_notices',
-				array( WP_Admin_Notices::getInstance(), 'displayNotices' ) )) );
+		$this->assertTrue( is_int( has_action( 'admin_notices',
+			array( WP_Admin_Notices::getInstance(), 'displayNotices' ) ) ) );
 
-		do_action('admin_init');
-
-		$this->assertTrue( is_int(has_action( 'admin_notices',
-				array( WP_Admin_Notices::getInstance(), 'displayNotices' ) )) );
+		$this->assertTrue( is_int( has_action( 'wp_ajax_' . WP_Admin_Notices::KILL_STICKY_NTC_AJAX_ACTION,
+			array( WP_Admin_Notices::getInstance(), 'ajaxDismissNotice' ) ) ) );
 	}
 }

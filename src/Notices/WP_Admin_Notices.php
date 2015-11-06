@@ -30,6 +30,18 @@ class WP_Admin_Notices {
 	 */
 	const KILL_STICKY_NTC_VAR = 'rm_ntc';
 	/**
+	 * Ajax action that is responsible for dismissing sticky notices
+	 */
+	const KILL_STICKY_NTC_AJAX_ACTION = 'wp_notice_dismiss';
+	/**
+	 *
+	 */
+	const KILL_STICKY_NTC_AJAX_NONCE_VAR = 'dismiss_nonce';
+	/**
+	 *
+	 */
+	const KILL_STICKY_NTC_AJAX_NTC_ID_VAR = 'notice_id';
+	/**
 	 * Instance of this class.
 	 *
 	 * @since 1.0.0
@@ -89,17 +101,41 @@ class WP_Admin_Notices {
 	 * Just echoes notices that should be displayed.
 	 */
 	public function displayNotices() {
-		foreach ( $this->notices as $ntcId => $notice ) {
+		foreach ( $this->notices as $index => $notice ) {
 			/* @var WP_Notice $notice */
 			if ( $this->isTimeToDisplayNtc( $notice ) ) {
 				echo $notice->getContentFormatted();
+
 				$notice->incrementDisplayedTimes();
 			}
 			if ( $this->isTimeToKillNtc( $notice ) ) {
-				unset( $this->notices[ $ntcId ] );
+				unset( $this->notices[ $index ] );
 			}
 		}
 		$this->storeNotices();
+	}
+
+	/**
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.0.1
+	 */
+	public function ajaxDismissNotice() {
+		check_ajax_referer( self::KILL_STICKY_NTC_AJAX_ACTION, self::KILL_STICKY_NTC_AJAX_NONCE_VAR );
+
+		$noticeId = $_POST[ self::KILL_STICKY_NTC_AJAX_NTC_ID_VAR ];
+
+		if ( $notice = $this > $this->getNotice( $noticeId ) ) {
+			/* @var WP_Notice $notice */
+			$notice->removeUser( get_current_user_id() );
+
+			$this->storeNotices();
+
+			wp_send_json_success();
+			die( 0 );
+		}
+
+		wp_send_json_error( 'Not permitted' );
+		die( 0 );
 	}
 
 	/**
@@ -111,7 +147,7 @@ class WP_Admin_Notices {
 	 */
 	private function isTimeToKillNtc( WP_Notice $notice ) {
 		if ( $notice->isSticky() ) {
-			return $this->isTimeToKillStickyNtc( $notice );
+			return false;
 		}
 
 		$ntcUsers = $notice->getUsers();
@@ -129,36 +165,6 @@ class WP_Admin_Notices {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Checks if it is time to die for sticky notices
-	 *
-	 * @param WP_Notice $notice
-	 *
-	 * @return bool
-	 * @throws \BadMethodCallException if this method is called for a non sticky message
-	 *
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
-	 */
-	private function isTimeToKillStickyNtc( WP_Notice &$notice ) {
-		if ( ! $notice->isSticky() ) {
-			throw new \BadMethodCallException( __METHOD__ . ' should not be called for non sticky notices' );
-		}
-
-		if ( ! isset( $_REQUEST[ self::KILL_STICKY_NTC_VAR ] ) || $_REQUEST[ self::KILL_STICKY_NTC_VAR ] != $notice->getId() ) {
-			return false;
-		}
-
-		$ntcUsers = $notice->getUsers();
-
-		if ( isset( $ntcUsers[ get_current_user_id() ] ) ) {
-			unset( $ntcUsers[ get_current_user_id() ] );
-			$notice->setUsers( $ntcUsers );
-		}
-
-		return empty( $ntcUsers );
 	}
 
 	/**
@@ -226,7 +232,7 @@ class WP_Admin_Notices {
 			return false;
 		}
 
-		return $notice->getTimes() > $notice->getDisplayedTimes();
+		return $notice->getTimes() <= $notice->getDisplayedTimes();
 	}
 
 	/**
@@ -262,4 +268,21 @@ class WP_Admin_Notices {
 		$this->storeNotices();
 	}
 
+	/**
+	 * @param $noticeId
+	 *
+	 * @return null|WP_Notice
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  TODO ${VERSION}
+	 */
+	public function getNotice( $noticeId ) {
+		foreach ( $this->notices as $key => $notice ) {
+			/* @var WP_Notice $notice */
+			if ( $notice->getId() === $noticeId ) {
+				return $notice;
+			}
+		}
+
+		return null;
+	}
 }

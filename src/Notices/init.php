@@ -10,16 +10,31 @@
  */
 namespace Pan\Notices;
 
-if ( ! has_action( 'admin_init', '\Pan\Notices\addAdminNoticesAction' ) ) {
-	add_action( 'admin_init',  '\Pan\Notices\addAdminNoticesAction');
-}
+//
+//if ( ! has_action( 'admin_init', '\Pan\Notices\addAdminNoticesAction' ) ) {
+//	add_action( 'admin_init',  '\Pan\Notices\addAdminNoticesAction');
+//}
+//
+//if(!function_exists('\Pan\Notices\addAdminNoticesAction')) {
+//	/**
+//	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+//	 * @since  TODO ${VERSION}
+//	 */
+//	function addAdminNoticesAction() {
+//		add_action( 'admin_notices', array( WP_Admin_Notices::getInstance(), 'displayNotices' ) );
+//	}
+//}
 
-if(!function_exists('\Pan\Notices\addAdminNoticesAction')) {
-	/**
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
-	 */
-	function addAdminNoticesAction() {
-		add_action( 'admin_notices', array( WP_Admin_Notices::getInstance(), 'displayNotices' ) );
+if(defined('WPINC')) {
+	$displayNtcCallback = array( WP_Admin_Notices::getInstance(), 'displayNotices' );
+
+	if ( ! has_action( 'admin_notices', $displayNtcCallback ) ) {
+		add_action( 'admin_notices', $displayNtcCallback );
+	}
+
+	$dismissNtcCallback = array( WP_Admin_Notices::getInstance(), 'ajaxDismissNotice' );
+
+	if ( ! has_action( 'admin_notices', $dismissNtcCallback ) ) {
+		add_action( 'wp_ajax_'.WP_Admin_Notices::KILL_STICKY_NTC_AJAX_ACTION, $dismissNtcCallback );
 	}
 }
