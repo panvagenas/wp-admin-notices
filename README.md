@@ -110,6 +110,10 @@ along with this program.  If not, see http://www.gnu.org/licenses/
 
 ### 2.0.1
 
+* New: Display notice only for a given user group
+
+### 2.0.1
+
 * Added sticky functionality
 
 ### 2.0.0

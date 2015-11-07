@@ -77,19 +77,36 @@ class WP_Notice {
 	protected $times = 1;
 
 	/**
-	 * Array index are the user ids this notice should be displayed, values are
+	 * Array indexes are the user ids this notice should be displayed, values are
 	 * the displayed times for each user.
 	 *
 	 * Index `0` yields total displayed times
 	 *
 	 * `[
-	 *      0 => $totalDisplayedTimes
-	 *      $userId => $displayedTimesForUser
+	 *      0 => $totalDisplayedTimesForUser,
+	 *      $userId => $displayedTimesForUser,
+	 *      ...
 	 * ]`
 	 *
 	 * @var array
 	 */
-	protected $users = array();
+	protected $users = array( 0 => 0 );
+
+	/**
+	 * Array indexes are role ids this notice should be displayed, values are the
+	 * displayed times for each role.
+	 *
+	 * Index `0` yields total displayed times
+	 *
+	 * `[
+	 *      0 => $totalDisplayedTimesForRole,
+	 *      $roleId => $displayedTimesForRole,
+	 *      ...
+	 * ]`
+	 *
+	 * @var array
+	 */
+	protected $roles = array( 0 => 0 );
 
 	/**
 	 * @var FormatterInterface
@@ -128,7 +145,6 @@ class WP_Notice {
 		foreach ( $users as $userId ) {
 			$this->addUser( $userId );
 		}
-		$this->addUser( 0 );
 
 		if ( ! in_array( $type, array( self::TYPE_UPDATED_NAG, self::TYPE_UPDATED, self::TYPE_ERROR ) ) ) {
 			$type = self::TYPE_UPDATED;
@@ -139,7 +155,7 @@ class WP_Notice {
 	/**
 	 * @return int
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function countUsers() {
 		return count( $this->users ) - 1;
@@ -161,7 +177,7 @@ class WP_Notice {
 	/**
 	 * @return WordPress|WordPressSticky
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	protected function getDefaultFormatter() {
 		if ( $this->isSticky() ) {
@@ -200,9 +216,19 @@ class WP_Notice {
 	public function incrementDisplayedTimes() {
 		$this->users[0] ++;
 
-		$userId = get_current_user_id();
+		$user = get_user_by( 'ID', get_current_user_id() );
 
-		$this->users[ $userId ] = $this->maybeInitDisplayedToUsers( $userId ) + 1;
+		if ( $this->hasUser( $user->ID ) ) {
+			$this->users[ $user->ID ] ++;
+		}
+
+		$this->roles[0]++;
+
+		foreach ( $user->roles as $role ) {
+			if ( $this->hasRole( $role ) ) {
+				$this->roles[ $role ] ++;
+			}
+		}
 
 		return $this;
 	}
@@ -213,8 +239,9 @@ class WP_Notice {
 	 * @param int $userId
 	 *
 	 * @return int The current value for the specified user after initialization
-	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  2.0.1
+	 * @author     Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since      2.0.1
+	 * @deprecated 2.1.0
 	 */
 	public function maybeInitDisplayedToUsers( $userId ) {
 		if ( ! $this->hasUser( $userId ) ) {
@@ -227,7 +254,7 @@ class WP_Notice {
 	/**
 	 * @return int
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function getDisplayedTimes() {
 		return $this->getDisplayedTimesForUser( 0 );
@@ -238,7 +265,7 @@ class WP_Notice {
 	 *
 	 * @return int
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function getDisplayedTimesForUser( $userId ) {
 		return $this->hasUser( $userId ) ? $this->users[ $userId ] : 0;
@@ -249,7 +276,7 @@ class WP_Notice {
 	 *
 	 * @return bool
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function exceededMaxTimesToDisplayForUser( $userId ) {
 		$userId = (int) $userId;
@@ -262,20 +289,54 @@ class WP_Notice {
 	}
 
 	/**
+	 * @param $role
+	 *
 	 * @return bool
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.1.0
 	 */
-	public function exceededMaxTimesToDisplay() {
-		$timesCounter = 0;
+	public function exceededMaxTimesForRole( $role ) {
+		$role = (string) $role;
 
-		foreach ( $this->getUsers() as $userTimes ) {
-			if ( $userTimes >= $this->times ) {
-				$timesCounter ++;
-			}
+		if ( $this->hasRole( $role ) && $this->roles[ $role ] < $this->times ) {
+			return false;
 		}
 
-		return $timesCounter >= $this->countUsers();
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.0.1
+	 */
+	public function exceededMaxTimesToDisplay() {
+		$excMaxTimesForUsers = $this->users[0] >= $this->times;
+		if ( $this->countUsers() > 0 ) {
+			$usersCounter = 0;
+			foreach ( array_keys( $this->getUsers() ) as $userId ) {
+				if ( $this->exceededMaxTimesToDisplayForUser( $userId ) ) {
+					$usersCounter ++;
+				}
+			}
+
+			$excMaxTimesForUsers = $usersCounter >= $this->countUsers();
+		}
+
+		$excMaxTimesForRoles = $this->roles[0] >= $this->times;
+		if ( $this->countRoles() > 0 ) {
+			$rolesCounter = 0;
+			foreach ( array_keys( $this->getRoles() ) as $role ) {
+				if ( $this->exceededMaxTimesForRole( $role ) ) {
+					$rolesCounter ++;
+				}
+			}
+
+			$excMaxTimesForRoles = $rolesCounter >= $this->countRoles();
+		}
+
+
+		return $excMaxTimesForUsers && $excMaxTimesForRoles;
 	}
 
 	/**
@@ -283,7 +344,7 @@ class WP_Notice {
 	 *
 	 * @return bool
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function hasUser( $userId ) {
 		return array_key_exists( (int) $userId, $this->users );
@@ -294,7 +355,7 @@ class WP_Notice {
 	 *
 	 * @return $this
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function addUser( $userId ) {
 		$userId = (int) $userId;
@@ -311,7 +372,7 @@ class WP_Notice {
 	 *
 	 * @return $this
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function removeUser( $userId ) {
 		$userId = (int) $userId;
@@ -445,7 +506,7 @@ class WP_Notice {
 	/**
 	 * @return boolean
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function isSticky() {
 		return $this->sticky;
@@ -456,11 +517,81 @@ class WP_Notice {
 	 *
 	 * @return $this
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function setSticky( $sticky ) {
 		$this->sticky = (bool) $sticky;
 
 		return $this;
+	}
+
+	/**
+	 * @param $role
+	 *
+	 * @return $this
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.1.0
+	 */
+	public function addRole( $role ) {
+		$role = (string) $role;
+		if ( ! $this->hasRole( $role ) ) {
+			$this->roles[ $role ] = 0;
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param $role
+	 *
+	 * @return $this
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.1.0
+	 */
+	public function removeRole( $role ) {
+		$role = (string) $role;
+
+		if ( $role != 0 && $this->hasRole( $role ) ) {
+			unset( $this->roles[ $role ] );
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param array $roles
+	 *
+	 * @return bool
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.1.0
+	 */
+	public function hasRole( $roles ) {
+		$roles = (array) $roles;
+
+		foreach ( $roles as $role ) {
+			if ( array_key_exists( $role, $this->roles ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return int
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.1.0
+	 */
+	public function countRoles() {
+		return count( $this->roles ) - 1;
+	}
+
+	/**
+	 * @return array
+	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
+	 * @since  2.1.0
+	 */
+	public function getRoles() {
+		return array_diff_key( $this->roles, array( 0 ) );
 	}
 }

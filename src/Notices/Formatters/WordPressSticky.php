@@ -5,7 +5,7 @@
  * User: Panagiotis Vagenas <pan.vagenas@gmail.com>
  * Date: 4/11/2015
  * Time: 9:16 πμ
- * Since: TODO ${VERSION}
+ * Since: 2.0.1
  * Copyright: 2015 Panagiotis Vagenas
  */
 
@@ -20,7 +20,7 @@ use Pan\Notices\WP_Notice;
  *
  * @package Pan\Notices\Formatters
  * @author  Panagiotis Vagenas <pan.vagenas@gmail.com>
- * @since   TODO ${VERSION}
+ * @since   2.0.1
  */
 class WordPressSticky implements FormatterInterface {
 	/**
@@ -28,7 +28,7 @@ class WordPressSticky implements FormatterInterface {
 	 *
 	 * @return string
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function formatOutput( WP_Notice $notice ) {
 		$unqId = uniqid( preg_replace( '/[^a-z0-9A-Z]/', '', $notice->getId() ) );
@@ -54,7 +54,7 @@ class WordPressSticky implements FormatterInterface {
 	 *
 	 * @return string
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	protected function dismissibleScript( WP_Notice $notice, $unqId ) {
 		return '

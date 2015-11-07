@@ -119,7 +119,7 @@ class WP_Admin_Notices {
 	private function isTimeToDisplayNtc( WP_Notice $notice ) {
 		return $this->isTimeToDisplayNtcForScreen( $notice )
 		       && $this->isTimeToDisplayNtcForUser( $notice )
-		       && ! $this->ntcExceededMaxTimesToDisplay( $notice );
+		       && ! $notice->exceededMaxTimesToDisplay();
 	}
 
 	/**
@@ -149,8 +149,13 @@ class WP_Admin_Notices {
 	 * @since  2.0.0
 	 */
 	private function isTimeToDisplayNtcForUser( WP_Notice $notice ) {
-		$curUser = get_current_user_id();
-		if ( $notice->countUsers() !== 0 && ! $notice->hasUser( $curUser ) ) {
+		$curUser = get_user_by('ID', get_current_user_id());
+
+		if ( $notice->countUsers() !== 0 && ! $notice->hasUser( $curUser->ID ) ) {
+			return false;
+		}
+
+		if($notice->countRoles() !== 0 && !$notice->hasRole($curUser->roles)){
 			return false;
 		}
 
@@ -163,6 +168,7 @@ class WP_Admin_Notices {
 	 * @return bool
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
 	 * @since  2.0.0
+	 * @deprecated 2.1.0
 	 */
 	private function ntcExceededMaxTimesToDisplay( WP_Notice $notice ) {
 		if ( $notice->isSticky() ) {
@@ -177,7 +183,7 @@ class WP_Admin_Notices {
 	 *
 	 * @return bool
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	private function isTimeToKillNtc( WP_Notice $notice ) {
 		if ( $notice->isSticky() ) {
@@ -226,7 +232,7 @@ class WP_Admin_Notices {
 	 *
 	 * @return null|WP_Notice
 	 * @author Panagiotis Vagenas <pan.vagenas@gmail.com>
-	 * @since  TODO ${VERSION}
+	 * @since  2.0.1
 	 */
 	public function getNotice( $noticeId ) {
 		foreach ( $this->notices as $key => $notice ) {
