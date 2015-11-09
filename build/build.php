@@ -34,6 +34,8 @@ $excludeFiles = array(
     '.travis.yml',
     'composer.json',
     'README.md',
+    '.gitattributes',
+    'LICENCE',
 );
 
 /**
