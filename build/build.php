@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /**
  * build.php description
@@ -13,29 +14,30 @@ $buildRoot       = __DIR__;
 $pharFileName    = 'wp-admin-notices.phar';
 $pharFileAbsPath = $buildRoot . "/$pharFileName";
 
-
 /**
  * Excluded dirs
  */
 $excludeDirs = array(
     '.git',
-    'tests',
     'build',
     'docs',
+    'tests',
 );
+
 /**
  * Excluded files
  */
 $excludeFiles = array(
-    'LICENCE.txt',
     '.coveralls.yml',
-    'composer.lock',
+    '.gitattributes',
     '.gitignore',
     '.travis.yml',
     'composer.json',
-    'README.md',
-    '.gitattributes',
-    'LICENCE',
+    'composer.lock',
+    'licence',
+    'licence.txt',
+    'readme',
+    'readme.md',
 );
 
 /**
@@ -47,56 +49,47 @@ $excludeFiles = array(
  *
  * @return bool True if you need to recurse or if the item is acceptable
  */
-$fileFilter =
-    function ($file, $key, $iterator) use ($excludeDirs, $excludeFiles)
-    {
-        if ($iterator->hasChildren()
-            && !in_array(
-                $file->getFilename(), $excludeDirs
-            )
-        )
-        {
-            return true;
-        }
+$fileFilter = function ( $file, $key, $iterator ) use ( $excludeDirs, $excludeFiles ) {
+    if ( $iterator->hasChildren() && ! in_array( strtolower( $file->getFilename() ), $excludeDirs ) ) {
+        return true;
+    }
 
-        return $file->isFile()
-               && !in_array(
-            $file->getFilename(), $excludeFiles
-        );
-    };
+    return $file->isFile() && ! in_array( strtolower( $file->getFilename() ), $excludeFiles );
+};
 
 
-$p = new Phar(
-    $pharFileName,
-    FilesystemIterator::CURRENT_AS_FILEINFO
-    | FilesystemIterator::KEY_AS_FILENAME
-);
+$p = new Phar( $pharFileName, FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::KEY_AS_FILENAME );
 
 $p->startBuffering();
 
-$p->setDefaultStub('vendor/autoload.php', 'vendor/autoload.php');
+$p->setDefaultStub( 'vendor/autoload.php', 'vendor/autoload.php' );
 
-if (file_exists($pharFileAbsPath) && is_readable($pharFileAbsPath))
-{
-    unlink($pharFileAbsPath);
+if ( file_exists( $pharFileAbsPath ) && is_readable( $pharFileAbsPath ) ) {
+    unlink( $pharFileAbsPath );
 }
 
 $gzFile = $pharFileAbsPath . '.gz';
-if (file_exists($gzFile) && is_readable($gzFile))
-{
-    unlink($gzFile);
+if ( file_exists( $gzFile ) && is_readable( $gzFile ) ) {
+    unlink( $gzFile );
 }
 
-$innerIterator = new RecursiveDirectoryIterator(
-    $projectRoot, RecursiveDirectoryIterator::SKIP_DOTS
-);
+$indexFilePath   = "{$projectRoot}/index.php";
+$indexFileHandle = fopen( $indexFilePath, 'w');
 
-$iterator = new RecursiveIteratorIterator(
-    new RecursiveCallbackFilterIterator($innerIterator, $fileFilter)
-);
+fwrite( $indexFileHandle, "<?php if(defined('WPINC')) require_once 'vendor/autoload.php';");
 
-$p->buildFromIterator($iterator, $projectRoot);
+fclose( $indexFileHandle);
 
-$p->compress(Phar::GZ);
+$innerIterator = new RecursiveDirectoryIterator( $projectRoot, RecursiveDirectoryIterator::SKIP_DOTS );
+
+$iterator = new RecursiveIteratorIterator( new RecursiveCallbackFilterIterator( $innerIterator, $fileFilter ) );
+
+$p->buildFromIterator( $iterator, $projectRoot );
+
+$p->compress( Phar::GZ );
 
 $p->stopBuffering();
+
+if ( file_exists( $indexFilePath ) && is_readable( $indexFilePath ) ) {
+    unlink( $indexFilePath );
+}
